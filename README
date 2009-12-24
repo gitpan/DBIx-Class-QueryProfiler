@@ -1,0 +1,30 @@
+NAME
+    DBIx::Class::QueryProfiler - DBIx::Class profiler
+
+DESCRIPTION
+    Profiler for DBIx::Class. Also it provides more usable output or
+    queries.
+
+SYNOPSYS
+        use DBIx::Class::QueryProfiler;
+
+        sub connection {
+            my $self = shift;
+            my $response = $self->next::method(@_);
+            $response->storage->auto_savepoint(1);
+            $response->storage->debugobj(DBIx::Class::QueryProfiler->new);
+            return $response;
+        }
+
+BUGS
+    No bugs. Found? Report please :-)
+
+AUTHOR
+    Andrey Kostenko <andrey@kostenko.name>, Mons Anderson <mons@cpan.org>
+
+COMPANY
+    Rambler Internet Holding
+
+CREATED
+    15.04.2009 19:28:45 MSD
+
