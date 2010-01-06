@@ -35,21 +35,27 @@ use Term::ANSIColor;
 use parent 'DBIx::Class::Storage::Statistics';
 
 use Time::HiRes qw(time);
+use IO::File;
+use Data::Dumper;
+
+__PACKAGE__->mk_group_accessors('simple' => qw/is_colored/);
 
 our $start;
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 our $N = 0;
 our %Q;
+our $fh;
 our %colormap = ( 'SELECT' => 'magenta', 'INSERT' => 'bold yellow', 'UPDATE' => 'bold blue', DELETE => 'bold red' );
 
 sub _c {
     my $self = shift;
-    if ( -t STDERR ) {
+    if ( $self->is_colored() ) {
         return color( @_ );
     } else {
         return '';
     }
 }
+
 
 =head2 query_start
 
@@ -71,15 +77,15 @@ sub query_start {
 =cut
 
 sub query_end {
-    my $self = shift();
-    my $sql = shift();
+    my $self = shift;
+    my $sql = shift;
     my $n = delete $Q{$sql} || '-.0';
     my @params = @_;
 
     my $elapsed = sprintf("%0.4f", time() - $start);
     my $prefix = '';
     my $suffix = '';
-    if ( -t STDERR ) {
+    if ( $self->is_colored() ) {
         if ( $elapsed < 0.01 ) {
             $prefix = color 'green';
         } elsif ( $elapsed < 0.1 ) {
@@ -95,7 +101,7 @@ sub query_end {
 
 =head2 print
 
-Prints data to STDERR
+Prints data into File Handle
 
 =cut
 
@@ -108,7 +114,27 @@ sub print {
         last;
     }
     @c = caller(1) unless @c;
-    return print STDERR "@_ at $c[1] line $c[2].\n";
+
+    # by default is colored output
+    $self->is_colored(1);
+    if (!defined ($self->debugfh())) {
+        # Check if we can get trace filename via ENV
+        my $debug_env = $ENV{DBIC_TRACE} || undef;
+        if (defined($debug_env) && ($debug_env =~ /=(.+)$/)) {
+            $fh = IO::File->new($1, 'w') or die "Cannot open trace file $1";
+            $self->is_colored(0);
+        } 
+        else {
+            $fh = IO::File->new('>&STDERR')
+                or die('Duplication of STDERR for debug output failed (perhaps your STDERR is closed?)');
+        }
+        $fh->autoflush();
+    }
+    else {
+        $self->is_colored(0);
+        $fh = $self->debugfh();
+    }
+    return print $fh "@_ at $c[1] line $c[2].\n";
 }
 
 1;

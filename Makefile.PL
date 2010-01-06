@@ -9,6 +9,7 @@ build_requires 'Test::More';
 requires 'parent';
 requires 'DBIx::Class';
 test_requires 'Test::Perl::Critic';
+repository 'http://developers.rambler.ru/svn/perlmodules/DBIx-Class-QueryProfiler/';
 
 auto_install;
 
