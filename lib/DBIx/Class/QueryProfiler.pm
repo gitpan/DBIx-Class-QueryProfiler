@@ -10,15 +10,26 @@ Profiler for DBIx::Class. Also it provides more usable output or queries.
 
 =head1 SYNOPSYS
 
+In order to start using just declare in your schema the code
+
     use DBIx::Class::QueryProfiler;
 
     sub connection {
         my $self = shift;
         my $response = $self->next::method(@_);
         $response->storage->auto_savepoint(1);
+        $response->storage->debug(1);
         $response->storage->debugobj(DBIx::Class::QueryProfiler->new);
         return $response;
     }
+
+Possible to use debugfh () to select right output debuging filehandle
+
+    $response->storage->debugfh(IO::File->new('/tmp/trace.out', 'w'));
+
+or it can be set through an environment variable DBIC_TRACE
+
+    export DBIC_TRACE="1=/tmp/trace.out"
 
 =head1 METHODS
 
@@ -36,12 +47,11 @@ use parent 'DBIx::Class::Storage::Statistics';
 
 use Time::HiRes qw(time);
 use IO::File;
-use Data::Dumper;
 
 __PACKAGE__->mk_group_accessors('simple' => qw/is_colored/);
 
 our $start;
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 our $N = 0;
 our %Q;
 our $fh;
@@ -59,6 +69,8 @@ sub _c {
 
 =head2 query_start
 
+Called before a query is executed. The first argument is the SQL string being executed and subsequent arguments are the parameters used for the query.
+
 =cut
 
 sub query_start {
@@ -73,6 +85,8 @@ sub query_start {
 }
 
 =head2 query_end
+
+Called when a query finishes executing. Has the same arguments as query_start.
 
 =cut
 
@@ -101,7 +115,7 @@ sub query_end {
 
 =head2 print
 
-Prints data into File Handle
+Prints the specified string to our debugging filehandle, which we will attempt to open if we haven't yet.
 
 =cut
 
@@ -145,7 +159,7 @@ sub print {
 
 No bugs. Found? Report please :-)
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Andrey Kostenko <andrey@kostenko.name>, Mons Anderson <mons@cpan.org>
 
