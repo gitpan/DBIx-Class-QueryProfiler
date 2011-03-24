@@ -51,7 +51,7 @@ use IO::File;
 __PACKAGE__->mk_group_accessors('simple' => qw/is_colored/);
 
 our $start;
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 our $N = 0;
 our %Q;
 our $fh;
@@ -124,7 +124,8 @@ sub print {
     my $i = 0;
     my @c;
     while (@c = caller(++$i)) {
-        next if $c[0] =~ m{^(?:DBIx::Class|Catalyst)};
+        next if $c[0] =~ m{^(?:DBIx::Class|Catalyst|Class::MOP|Moose::Object)};
+        next if exists $Carp::Internal{$c[0]};
         last;
     }
     @c = caller(1) unless @c;
